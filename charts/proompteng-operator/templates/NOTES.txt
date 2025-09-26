@@ -1,0 +1,9 @@
+Thank you for installing the Proompteng operator!
+
+To verify the deployment:
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+Operator configuration is stored in the ConfigMap:
+  kubectl get configmap {{ include "proompteng-operator.fullname" . }}-config -n {{ .Release.Namespace }} -o yaml
+
+Metrics are exposed on Service {{ include "proompteng-operator.fullname" . }}:{{ .Values.metrics.service.port }}.

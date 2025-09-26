@@ -1,0 +1,105 @@
+# Default values for the Proompteng operator chart.
+
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/proompteng/operator
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+rbac:
+  create: true
+
+podAnnotations: {}
+podLabels: {}
+
+priorityClassName: ""
+
+podSecurityContext: {}
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+
+resources:
+  limits: {}
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+
+affinity: {}
+
+# Example topology spread constraint:
+# - topologyKey: kubernetes.io/hostname
+#   whenUnsatisfiable: ScheduleAnyway
+#   labelSelector:
+#     matchLabels:
+#       app.kubernetes.io/name: proompteng-operator
+#   maxSkew: 1
+topologySpreadConstraints: []
+
+tolerations: []
+
+args: []
+
+env: []
+
+extraEnvFrom: []
+
+metrics:
+  service:
+    type: ClusterIP
+    port: 9090
+    annotations: {}
+  serviceMonitor:
+    enabled: false
+    namespace: ""
+    interval: ""
+    scrapeTimeout: ""
+    labels: {}
+
+probes:
+  liveness:
+    enabled: true
+    path: /healthz
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  readiness:
+    enabled: true
+    path: /readyz
+    initialDelaySeconds: 5
+    periodSeconds: 10
+
+leaderElection:
+  enabled: true
+  leaseDurationSeconds: 30
+  renewDeadlineSeconds: 20
+  retryPeriodSeconds: 5
+
+featureFlags:
+  enableAgentServices: true
+  enableEvalSuites: false
+
+config:
+  logLevel: info
+  defaultNamespace: proompteng-system
+
+serviceAccountToken:
+  automount: true
+
+pdb:
+  enabled: false
+  minAvailable: 1

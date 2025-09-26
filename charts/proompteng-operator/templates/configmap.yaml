@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "proompteng-operator.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "proompteng-operator.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    logLevel: {{ .Values.config.logLevel | default "info" }}
+    defaultNamespace: {{ .Values.config.defaultNamespace | default "proompteng-system" }}
+    leaderElection:
+      enabled: {{ .Values.leaderElection.enabled | default true }}
+      leaseDurationSeconds: {{ .Values.leaderElection.leaseDurationSeconds | default 30 }}
+      renewDeadlineSeconds: {{ .Values.leaderElection.renewDeadlineSeconds | default 20 }}
+      retryPeriodSeconds: {{ .Values.leaderElection.retryPeriodSeconds | default 5 }}
+    featureFlags:
+{{ toYaml .Values.featureFlags | indent 6 }}

@@ -1,0 +1,14 @@
+apiVersion: proompteng.ai/v1alpha1
+kind: Memory
+metadata:
+  name: mongo-memory
+  namespace: proompteng-system
+  labels:
+    app.kubernetes.io/part-of: proompteng
+spec:
+  type: mongodb
+  uri: mongodb://proompteng:changeme@mongo-primary:27017/agents
+  credentialsSecretRef: mongo-credentials
+  config:
+    database: agents
+    collection: conversations

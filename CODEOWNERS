@@ -1,0 +1,11 @@
+# Default owners for everything in this repository
+* @proompteng/maintainers
+
+# Operator code
+/operator/ @proompteng/operator-team
+
+# Helm charts
+/charts/ @proompteng/platform-charts
+
+# Example apps
+/apps/ @proompteng/app-examples

@@ -1,0 +1,12 @@
+extends: default
+
+ignore: |
+  charts/proompteng-operator/templates/*
+
+rules:
+  braces: disable
+  line-length:
+    max: 140
+    level: warning
+  document-start: disable
+  truthy: disable

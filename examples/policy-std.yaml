@@ -1,0 +1,19 @@
+apiVersion: proompteng.ai/v1alpha1
+kind: Policy
+metadata:
+  name: standard-policy
+  namespace: proompteng-system
+  labels:
+    app.kubernetes.io/part-of: proompteng
+spec:
+  mode: enforce
+  limits:
+    requestsPerMinute: 120
+    tokensPerDay: 500000
+  selectors:
+    - kind: Agent
+      name: echo-agent
+  conditions:
+    - type: maxTokensPerCall
+      expression: input.tokens <= 4096
+      message: "Requests must stay under 4k tokens"

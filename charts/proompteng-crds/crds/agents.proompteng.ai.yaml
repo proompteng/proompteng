@@ -1,0 +1,145 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: agents.proompteng.ai
+spec:
+  group: proompteng.ai
+  scope: Namespaced
+  names:
+    plural: agents
+    singular: agent
+    kind: Agent
+    shortNames:
+      - ag
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Model
+          type: string
+          jsonPath: .spec.model.name
+        - name: Provider
+          type: string
+          jsonPath: .spec.model.provider
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: Defines an AI agent managed by the Proompteng operator.
+          properties:
+            spec:
+              type: object
+              required:
+                - model
+                - runtime
+              properties:
+                displayName:
+                  type: string
+                  description: Human-friendly agent name.
+                model:
+                  type: object
+                  required:
+                    - provider
+                    - name
+                  properties:
+                    provider:
+                      type: string
+                      description: Model provider identifier.
+                    name:
+                      type: string
+                      description: Model identifier within the provider.
+                    parameters:
+                      type: object
+                      additionalProperties: true
+                      description: Arbitrary model parameters.
+                runtime:
+                  type: object
+                  required:
+                    - image
+                  properties:
+                    image:
+                      type: string
+                      description: Container image used for the agent runtime.
+                    env:
+                      type: array
+                      description: Environment variables passed to the agent.
+                      items:
+                        type: object
+                        required:
+                          - name
+                        properties:
+                          name:
+                            type: string
+                          value:
+                            type: string
+                    service:
+                      type: object
+                      description: Optional service hints.
+                      properties:
+                        port:
+                          type: integer
+                          format: int32
+                        path:
+                          type: string
+                transport:
+                  type: object
+                  description: Configuration for how requests reach the agent.
+                  properties:
+                    protocol:
+                      type: string
+                    endpoint:
+                      type: string
+                memoryRefs:
+                  type: array
+                  description: References to memory resources.
+                  items:
+                    type: string
+                toolRefs:
+                  type: array
+                  description: References to tools usable by this agent.
+                  items:
+                    type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: High-level agent lifecycle phase.
+                observedGeneration:
+                  type: integer
+                  format: int64
+                serviceName:
+                  type: string
+                  description: Name of the Service backing the agent.
+                readyReplicas:
+                  type: integer
+                  format: int32
+                lastTransitionTime:
+                  type: string
+                  format: date-time
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - type
+                      - status
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+          required:
+            - spec

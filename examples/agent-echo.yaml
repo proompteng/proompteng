@@ -1,0 +1,26 @@
+apiVersion: proompteng.ai/v1alpha1
+kind: Agent
+metadata:
+  name: echo-agent
+  namespace: proompteng-system
+  labels:
+    app.kubernetes.io/part-of: proompteng
+spec:
+  displayName: Echo Agent
+  model:
+    provider: openai
+    name: gpt-4o-mini
+  runtime:
+    image: ghcr.io/proompteng/echo-agent:0.1.0
+    env:
+      - name: MODEL_PROVIDER
+        value: openai
+      - name: MODEL_NAME
+        value: gpt-4o-mini
+      - name: MEMORY_URI
+        value: mongodb://proompteng:changeme@mongo-primary:27017/agents
+    service:
+      port: 8000
+  memoryRefs:
+    - mongo-memory
+  toolRefs: []

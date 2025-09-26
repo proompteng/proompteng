@@ -1,0 +1,17 @@
+apiVersion: v2
+name: proompteng-crds
+description: Install Proompteng CustomResourceDefinitions.
+type: application
+version: 0.1.0
+appVersion: 0.1.0
+home: https://github.com/proompteng/proompteng
+keywords:
+  - proompteng
+  - ai
+  - operators
+  - crd
+maintainers:
+  - name: Proompteng Platform Team
+    url: https://github.com/proompteng
+annotations:
+  category: crds

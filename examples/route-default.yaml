@@ -1,0 +1,23 @@
+apiVersion: proompteng.ai/v1alpha1
+kind: ModelRoute
+metadata:
+  name: default-route
+  labels:
+    app.kubernetes.io/part-of: proompteng
+spec:
+  backends:
+    - provider: openai
+      model: gpt-4o-mini
+      weight: 80
+      secretRef: openai-api
+    - provider: anthropic
+      model: claude-3-haiku
+      weight: 20
+      secretRef: anthropic-api
+  retries:
+    maxAttempts: 3
+    backoffSeconds: 2
+  budgets:
+    tokenBudget: 500000
+    concurrency: 50
+  trafficPolicy: weighted
