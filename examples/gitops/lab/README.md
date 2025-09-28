@@ -12,6 +12,6 @@ argocd/
       kustomization.yaml
 ```
 
-The provided [`applications/proompteng/kustomization.yaml`](applications/proompteng/kustomization.yaml)
+The provided [`argocd/applications/proompteng/kustomization.yaml`](argocd/applications/proompteng/kustomization.yaml)
 sets the namespace and references the tagged release manifest hosted in this
 repository. Update the URL to match the version you want ArgoCD to track.
