@@ -1,0 +1,80 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: tools.proompteng.ai
+spec:
+  group: proompteng.ai
+  scope: Namespaced
+  names:
+    plural: tools
+    singular: tool
+    kind: Tool
+    shortNames:
+      - tl
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Type
+          type: string
+          jsonPath: .spec.type
+        - name: Endpoint
+          type: string
+          jsonPath: .spec.endpoint.url
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: Declarative specification for external tools callable by agents.
+          properties:
+            spec:
+              type: object
+              required:
+                - type
+              properties:
+                type:
+                  type: string
+                  description: Tool kind (http, grpc, sidecar, etc.).
+                endpoint:
+                  type: object
+                  properties:
+                    url:
+                      type: string
+                    timeoutSeconds:
+                      type: integer
+                      format: int32
+                      minimum: 1
+                    method:
+                      type: string
+                auth:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - none
+                        - apiKey
+                        - bearer
+                    secretRef:
+                      type: string
+                    headerName:
+                      type: string
+                config:
+                  type: object
+                  additionalProperties: true
+                  description: Additional tool configuration.
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                lastInvocation:
+                  type: string
+                  format: date-time
+          required:
+            - spec

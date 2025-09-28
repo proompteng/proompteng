@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: proompteng-system
+resources:
+  - namespace.yaml
+  - crds/agentservices.proompteng.ai.yaml
+  - crds/agents.proompteng.ai.yaml
+  - crds/connectors.proompteng.ai.yaml
+  - crds/evalsuites.proompteng.ai.yaml
+  - crds/memories.proompteng.ai.yaml
+  - crds/modelroutes.proompteng.ai.yaml
+  - crds/policies.proompteng.ai.yaml
+  - crds/tools.proompteng.ai.yaml
+  - operator-serviceaccount.yaml
+  - operator-rbac.yaml
+  - operator-configmap.yaml
+  - operator-deployment.yaml
+  - operator-service.yaml

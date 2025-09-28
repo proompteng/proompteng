@@ -1,0 +1,94 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: modelroutes.proompteng.ai
+spec:
+  group: proompteng.ai
+  scope: Cluster
+  names:
+    plural: modelroutes
+    singular: modelroute
+    kind: ModelRoute
+    shortNames:
+      - mroute
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Default Provider
+          type: string
+          jsonPath: .spec.backends[0].provider
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: Routing configuration for model backends.
+          properties:
+            spec:
+              type: object
+              required:
+                - backends
+              properties:
+                backends:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required:
+                      - provider
+                      - model
+                      - weight
+                    properties:
+                      provider:
+                        type: string
+                      model:
+                        type: string
+                      weight:
+                        type: integer
+                        format: int32
+                        minimum: 1
+                      secretRef:
+                        type: string
+                      endpoint:
+                        type: string
+                retries:
+                  type: object
+                  properties:
+                    maxAttempts:
+                      type: integer
+                      format: int32
+                      minimum: 1
+                    backoffSeconds:
+                      type: integer
+                      format: int32
+                      minimum: 1
+                budgets:
+                  type: object
+                  properties:
+                    tokenBudget:
+                      type: integer
+                      format: int32
+                    concurrency:
+                      type: integer
+                      format: int32
+                trafficPolicy:
+                  type: string
+                  description: Optional routing policy label.
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                lastTransitionTime:
+                  type: string
+                  format: date-time
+          required:
+            - spec

@@ -1,0 +1,66 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: memories.proompteng.ai
+spec:
+  group: proompteng.ai
+  scope: Namespaced
+  names:
+    plural: memories
+    singular: memory
+    kind: Memory
+    shortNames:
+      - mem
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Type
+          type: string
+          jsonPath: .spec.type
+        - name: Ready
+          type: string
+          jsonPath: .status.phase
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: Describes a memory backend for agents.
+          properties:
+            spec:
+              type: object
+              required:
+                - type
+              properties:
+                type:
+                  type: string
+                  description: Memory backend type (e.g. mongodb, postgres).
+                uri:
+                  type: string
+                  description: Connection string or resource URI.
+                credentialsSecretRef:
+                  type: string
+                  description: Secret containing credentials.
+                config:
+                  type: object
+                  additionalProperties: true
+                  description: Additional backend-specific configuration.
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: Memory readiness state.
+                observedGeneration:
+                  type: integer
+                  format: int64
+                message:
+                  type: string
+                  description: Human-readable status message.
+                lastTransitionTime:
+                  type: string
+                  format: date-time
+          required:
+            - spec
