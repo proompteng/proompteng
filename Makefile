@@ -28,7 +28,7 @@ install-operator:
 	helm upgrade --install proompteng charts/proompteng-operator -n proompteng-system
 
 run-operator-local:
-        KUBECONFIG=$${KUBECONFIG:-$$HOME/.kube/config} go run ./operator/main.go
+	KUBECONFIG=$${KUBECONFIG:-$$HOME/.kube/config} go run ./operator/main.go
 
 release-manifest:
 	$(PYTHON) hack/update_release_manifest.py --extra-output manifests/proompteng/install.yaml
