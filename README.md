@@ -31,6 +31,12 @@ Proompteng provides a foundation for deploying AI agent infrastructure on Kubern
      - https://raw.githubusercontent.com/proompteng/proompteng/<tag>/manifests/proompteng/install.yaml
    ```
    Replace `<tag>` with the Git tag or branch you want to track (for example, `main` or `v0.1.0`).
+   If you prefer to consume a directory instead of a single URL you can point at
+   the accompanying Kustomize base:
+   ```yaml
+   resources:
+     - github.com/proompteng/proompteng//manifests/proompteng?ref=<tag>
+   ```
    When you want to pin to an immutable GitHub release, reference the
    versioned manifest published under `releases/`:
    ```yaml

@@ -12,7 +12,15 @@ resources:
 ```
 
 Run `make release-manifest` after changing any manifests in
-`releases/kubernetes/proompteng/` to refresh the mirrored file.
+`releases/kubernetes/proompteng/` to refresh the mirrored file. Remote
+consumers who prefer `apply -k` can point at the accompanying
+[`manifests/proompteng/kustomization.yaml`](proompteng/kustomization.yaml)
+instead of the raw manifest:
+
+```yaml
+resources:
+  - github.com/proompteng/proompteng//manifests/proompteng?ref=<tag>
+```
 
 Downstream repositories that prefer to reference only tagged releases can use
 the canonical copy under `releases/` instead:

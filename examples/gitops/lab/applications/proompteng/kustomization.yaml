@@ -4,4 +4,4 @@ kind: Kustomization
 namespace: proompteng-system
 resources:
   # Pin to the Git tag you want ArgoCD/Kustomize to track.
-  - https://raw.githubusercontent.com/proompteng/proompteng/v0.1.0/releases/kubernetes/proompteng/install.yaml
+  - https://raw.githubusercontent.com/proompteng/proompteng/<tag>/releases/kubernetes/proompteng/install.yaml
