@@ -1,0 +1,68 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: connectors.proompteng.ai
+spec:
+  group: proompteng.ai
+  scope: Namespaced
+  names:
+    plural: connectors
+    singular: connector
+    kind: Connector
+    shortNames:
+      - conn
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Target
+          type: string
+          jsonPath: .spec.target.name
+        - name: Type
+          type: string
+          jsonPath: .spec.type
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: Represents an integration connector for agents.
+          properties:
+            spec:
+              type: object
+              required:
+                - type
+                - target
+              properties:
+                type:
+                  type: string
+                  description: Connector type (event, datasource, etc.).
+                target:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                    url:
+                      type: string
+                    credentialsSecretRef:
+                      type: string
+                config:
+                  type: object
+                  additionalProperties: true
+                  description: Arbitrary connector configuration.
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                lastSyncTime:
+                  type: string
+                  format: date-time
+          required:
+            - spec

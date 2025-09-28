@@ -1,4 +1,4 @@
-.PHONY: lint helm-lint yamllint kubeconform ruff go-test install-crds install-operator run-operator-local
+.PHONY: lint helm-lint yamllint kubeconform ruff go-test install-crds install-operator run-operator-local release-manifest
 
 helm-lint:
 	helm lint charts/proompteng-crds
@@ -26,4 +26,8 @@ install-operator:
 	helm upgrade --install proompteng charts/proompteng-operator -n proompteng-system
 
 run-operator-local:
-	KUBECONFIG=$${KUBECONFIG:-$$HOME/.kube/config} go run ./operator/main.go
+        KUBECONFIG=$${KUBECONFIG:-$$HOME/.kube/config} go run ./operator/main.go
+
+release-manifest:
+	python hack/update_release_manifest.py --extra-output manifests/proompteng/install.yaml
+

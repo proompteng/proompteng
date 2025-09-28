@@ -1,0 +1,95 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: proompteng-proompteng-operator
+  labels:
+    app.kubernetes.io/name: proompteng-operator
+    app.kubernetes.io/instance: proompteng
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/part-of: proompteng
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - services
+      - events
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - proompteng.ai
+    resources:
+      - agents
+      - agents/status
+      - memories
+      - memories/status
+      - tools
+      - connectors
+      - policies
+      - modelroutes
+      - modelroutes/status
+      - agentservices
+      - agentservices/status
+      - evalsuites
+      - evalsuites/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: proompteng-proompteng-operator
+  labels:
+    app.kubernetes.io/name: proompteng-operator
+    app.kubernetes.io/instance: proompteng
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/part-of: proompteng
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: proompteng-proompteng-operator
+subjects:
+  - kind: ServiceAccount
+    name: proompteng-proompteng-operator
+    namespace: proompteng-system

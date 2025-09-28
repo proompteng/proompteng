@@ -1,0 +1,78 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: evalsuites.proompteng.ai
+spec:
+  group: proompteng.ai
+  scope: Namespaced
+  names:
+    plural: evalsuites
+    singular: evalsuite
+    kind: EvalSuite
+    shortNames:
+      - eval
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Schedule
+          type: string
+          jsonPath: .spec.schedule
+        - name: Last Run
+          type: string
+          jsonPath: .status.lastRunTime
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: Defines automated evaluation suites for agents.
+          properties:
+            spec:
+              type: object
+              properties:
+                schedule:
+                  type: string
+                  description: Cron-style schedule for the evaluation run.
+                targets:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - agentRef
+                    properties:
+                      agentRef:
+                        type: string
+                      scenario:
+                        type: string
+                tests:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required:
+                      - name
+                      - prompt
+                    properties:
+                      name:
+                        type: string
+                      prompt:
+                        type: string
+                      expected:
+                        type: string
+                      scoringStrategy:
+                        type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                lastRunTime:
+                  type: string
+                  format: date-time
+                observedGeneration:
+                  type: integer
+                  format: int64
+          required:
+            - spec

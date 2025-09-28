@@ -1,0 +1,87 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: policies.proompteng.ai
+spec:
+  group: proompteng.ai
+  scope: Namespaced
+  names:
+    plural: policies
+    singular: policy
+    kind: Policy
+    shortNames:
+      - pol
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Mode
+          type: string
+          jsonPath: .spec.mode
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: Policy definitions applied to agents and tools.
+          properties:
+            spec:
+              type: object
+              required:
+                - mode
+              properties:
+                mode:
+                  type: string
+                  description: Enforcement mode (enforce, monitor).
+                limits:
+                  type: object
+                  properties:
+                    requestsPerMinute:
+                      type: integer
+                      format: int32
+                      minimum: 1
+                    tokensPerDay:
+                      type: integer
+                      format: int32
+                      minimum: 1
+                selectors:
+                  type: array
+                  description: Target selectors for the policy.
+                  items:
+                    type: object
+                    properties:
+                      kind:
+                        type: string
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                conditions:
+                  type: array
+                  description: Additional guardrails.
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      expression:
+                        type: string
+                      message:
+                        type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                lastEvaluationTime:
+                  type: string
+                  format: date-time
+          required:
+            - spec

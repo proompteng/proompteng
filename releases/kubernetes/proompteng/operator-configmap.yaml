@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proompteng-proompteng-operator-config
+  namespace: proompteng-system
+  labels:
+    app.kubernetes.io/name: proompteng-operator
+    app.kubernetes.io/instance: proompteng
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/part-of: proompteng
+data:
+  config.yaml: |
+    logLevel: info
+    defaultNamespace: proompteng-system
+    leaderElection:
+      enabled: true
+      leaseDurationSeconds: 30
+      renewDeadlineSeconds: 20
+      retryPeriodSeconds: 5
+    featureFlags:
+      enableAgentServices: true
+      enableEvalSuites: false

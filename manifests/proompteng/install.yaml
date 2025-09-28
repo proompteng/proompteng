@@ -1,0 +1,958 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: proompteng-system
+  labels:
+    app.kubernetes.io/name: proompteng-system
+    app.kubernetes.io/part-of: proompteng
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: agents.proompteng.ai
+spec:
+  group: proompteng.ai
+  scope: Namespaced
+  names:
+    plural: agents
+    singular: agent
+    kind: Agent
+    shortNames:
+      - ag
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Model
+          type: string
+          jsonPath: .spec.model.name
+        - name: Provider
+          type: string
+          jsonPath: .spec.model.provider
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: Defines an AI agent managed by the Proompteng operator.
+          properties:
+            spec:
+              type: object
+              required:
+                - model
+                - runtime
+              properties:
+                displayName:
+                  type: string
+                  description: Human-friendly agent name.
+                model:
+                  type: object
+                  required:
+                    - provider
+                    - name
+                  properties:
+                    provider:
+                      type: string
+                      description: Model provider identifier.
+                    name:
+                      type: string
+                      description: Model identifier within the provider.
+                    parameters:
+                      type: object
+                      additionalProperties: true
+                      description: Arbitrary model parameters.
+                runtime:
+                  type: object
+                  required:
+                    - image
+                  properties:
+                    image:
+                      type: string
+                      description: Container image used for the agent runtime.
+                    env:
+                      type: array
+                      description: Environment variables passed to the agent.
+                      items:
+                        type: object
+                        required:
+                          - name
+                        properties:
+                          name:
+                            type: string
+                          value:
+                            type: string
+                    service:
+                      type: object
+                      description: Optional service hints.
+                      properties:
+                        port:
+                          type: integer
+                          format: int32
+                        path:
+                          type: string
+                transport:
+                  type: object
+                  description: Configuration for how requests reach the agent.
+                  properties:
+                    protocol:
+                      type: string
+                    endpoint:
+                      type: string
+                memoryRefs:
+                  type: array
+                  description: References to memory resources.
+                  items:
+                    type: string
+                toolRefs:
+                  type: array
+                  description: References to tools usable by this agent.
+                  items:
+                    type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: High-level agent lifecycle phase.
+                observedGeneration:
+                  type: integer
+                  format: int64
+                serviceName:
+                  type: string
+                  description: Name of the Service backing the agent.
+                readyReplicas:
+                  type: integer
+                  format: int32
+                lastTransitionTime:
+                  type: string
+                  format: date-time
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - type
+                      - status
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+          required:
+            - spec
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: agentservices.proompteng.ai
+spec:
+  group: proompteng.ai
+  scope: Namespaced
+  names:
+    plural: agentservices
+    singular: agentservice
+    kind: AgentService
+    shortNames:
+      - agsvc
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Auth
+          type: string
+          jsonPath: .spec.auth.type
+        - name: Agent
+          type: string
+          jsonPath: .spec.agentRef.name
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: Exposes an agent behind a service facade with auth and rate limiting.
+          properties:
+            spec:
+              type: object
+              required:
+                - agentRef
+              properties:
+                agentRef:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                auth:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - none
+                        - apiKey
+                        - oidc
+                    apiKeySecretRef:
+                      type: string
+                    oidcIssuer:
+                      type: string
+                rateLimit:
+                  type: object
+                  properties:
+                    requestsPerMinute:
+                      type: integer
+                      format: int32
+                    burst:
+                      type: integer
+                      format: int32
+                transport:
+                  type: object
+                  properties:
+                    protocol:
+                      type: string
+                    publicEndpoint:
+                      type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                lastTransitionTime:
+                  type: string
+                  format: date-time
+          required:
+            - spec
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: connectors.proompteng.ai
+spec:
+  group: proompteng.ai
+  scope: Namespaced
+  names:
+    plural: connectors
+    singular: connector
+    kind: Connector
+    shortNames:
+      - conn
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Target
+          type: string
+          jsonPath: .spec.target.name
+        - name: Type
+          type: string
+          jsonPath: .spec.type
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: Represents an integration connector for agents.
+          properties:
+            spec:
+              type: object
+              required:
+                - type
+                - target
+              properties:
+                type:
+                  type: string
+                  description: Connector type (event, datasource, etc.).
+                target:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                    url:
+                      type: string
+                    credentialsSecretRef:
+                      type: string
+                config:
+                  type: object
+                  additionalProperties: true
+                  description: Arbitrary connector configuration.
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                lastSyncTime:
+                  type: string
+                  format: date-time
+          required:
+            - spec
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: evalsuites.proompteng.ai
+spec:
+  group: proompteng.ai
+  scope: Namespaced
+  names:
+    plural: evalsuites
+    singular: evalsuite
+    kind: EvalSuite
+    shortNames:
+      - eval
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Schedule
+          type: string
+          jsonPath: .spec.schedule
+        - name: Last Run
+          type: string
+          jsonPath: .status.lastRunTime
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: Defines automated evaluation suites for agents.
+          properties:
+            spec:
+              type: object
+              properties:
+                schedule:
+                  type: string
+                  description: Cron-style schedule for the evaluation run.
+                targets:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - agentRef
+                    properties:
+                      agentRef:
+                        type: string
+                      scenario:
+                        type: string
+                tests:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required:
+                      - name
+                      - prompt
+                    properties:
+                      name:
+                        type: string
+                      prompt:
+                        type: string
+                      expected:
+                        type: string
+                      scoringStrategy:
+                        type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                lastRunTime:
+                  type: string
+                  format: date-time
+                observedGeneration:
+                  type: integer
+                  format: int64
+          required:
+            - spec
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: memories.proompteng.ai
+spec:
+  group: proompteng.ai
+  scope: Namespaced
+  names:
+    plural: memories
+    singular: memory
+    kind: Memory
+    shortNames:
+      - mem
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Type
+          type: string
+          jsonPath: .spec.type
+        - name: Ready
+          type: string
+          jsonPath: .status.phase
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: Describes a memory backend for agents.
+          properties:
+            spec:
+              type: object
+              required:
+                - type
+              properties:
+                type:
+                  type: string
+                  description: Memory backend type (e.g. mongodb, postgres).
+                uri:
+                  type: string
+                  description: Connection string or resource URI.
+                credentialsSecretRef:
+                  type: string
+                  description: Secret containing credentials.
+                config:
+                  type: object
+                  additionalProperties: true
+                  description: Additional backend-specific configuration.
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: Memory readiness state.
+                observedGeneration:
+                  type: integer
+                  format: int64
+                message:
+                  type: string
+                  description: Human-readable status message.
+                lastTransitionTime:
+                  type: string
+                  format: date-time
+          required:
+            - spec
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: modelroutes.proompteng.ai
+spec:
+  group: proompteng.ai
+  scope: Cluster
+  names:
+    plural: modelroutes
+    singular: modelroute
+    kind: ModelRoute
+    shortNames:
+      - mroute
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Default Provider
+          type: string
+          jsonPath: .spec.backends[0].provider
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: Routing configuration for model backends.
+          properties:
+            spec:
+              type: object
+              required:
+                - backends
+              properties:
+                backends:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required:
+                      - provider
+                      - model
+                      - weight
+                    properties:
+                      provider:
+                        type: string
+                      model:
+                        type: string
+                      weight:
+                        type: integer
+                        format: int32
+                        minimum: 1
+                      secretRef:
+                        type: string
+                      endpoint:
+                        type: string
+                retries:
+                  type: object
+                  properties:
+                    maxAttempts:
+                      type: integer
+                      format: int32
+                      minimum: 1
+                    backoffSeconds:
+                      type: integer
+                      format: int32
+                      minimum: 1
+                budgets:
+                  type: object
+                  properties:
+                    tokenBudget:
+                      type: integer
+                      format: int32
+                    concurrency:
+                      type: integer
+                      format: int32
+                trafficPolicy:
+                  type: string
+                  description: Optional routing policy label.
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                lastTransitionTime:
+                  type: string
+                  format: date-time
+          required:
+            - spec
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: policies.proompteng.ai
+spec:
+  group: proompteng.ai
+  scope: Namespaced
+  names:
+    plural: policies
+    singular: policy
+    kind: Policy
+    shortNames:
+      - pol
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Mode
+          type: string
+          jsonPath: .spec.mode
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: Policy definitions applied to agents and tools.
+          properties:
+            spec:
+              type: object
+              required:
+                - mode
+              properties:
+                mode:
+                  type: string
+                  description: Enforcement mode (enforce, monitor).
+                limits:
+                  type: object
+                  properties:
+                    requestsPerMinute:
+                      type: integer
+                      format: int32
+                      minimum: 1
+                    tokensPerDay:
+                      type: integer
+                      format: int32
+                      minimum: 1
+                selectors:
+                  type: array
+                  description: Target selectors for the policy.
+                  items:
+                    type: object
+                    properties:
+                      kind:
+                        type: string
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                conditions:
+                  type: array
+                  description: Additional guardrails.
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      expression:
+                        type: string
+                      message:
+                        type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                lastEvaluationTime:
+                  type: string
+                  format: date-time
+          required:
+            - spec
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: tools.proompteng.ai
+spec:
+  group: proompteng.ai
+  scope: Namespaced
+  names:
+    plural: tools
+    singular: tool
+    kind: Tool
+    shortNames:
+      - tl
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Type
+          type: string
+          jsonPath: .spec.type
+        - name: Endpoint
+          type: string
+          jsonPath: .spec.endpoint.url
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: Declarative specification for external tools callable by agents.
+          properties:
+            spec:
+              type: object
+              required:
+                - type
+              properties:
+                type:
+                  type: string
+                  description: Tool kind (http, grpc, sidecar, etc.).
+                endpoint:
+                  type: object
+                  properties:
+                    url:
+                      type: string
+                    timeoutSeconds:
+                      type: integer
+                      format: int32
+                      minimum: 1
+                    method:
+                      type: string
+                auth:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - none
+                        - apiKey
+                        - bearer
+                    secretRef:
+                      type: string
+                    headerName:
+                      type: string
+                config:
+                  type: object
+                  additionalProperties: true
+                  description: Additional tool configuration.
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                lastInvocation:
+                  type: string
+                  format: date-time
+          required:
+            - spec
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: proompteng-proompteng-operator
+  namespace: proompteng-system
+  labels:
+    app.kubernetes.io/name: proompteng-operator
+    app.kubernetes.io/instance: proompteng
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/part-of: proompteng
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: proompteng-proompteng-operator
+  labels:
+    app.kubernetes.io/name: proompteng-operator
+    app.kubernetes.io/instance: proompteng
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/part-of: proompteng
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - services
+      - events
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - proompteng.ai
+    resources:
+      - agents
+      - agents/status
+      - memories
+      - memories/status
+      - tools
+      - connectors
+      - policies
+      - modelroutes
+      - modelroutes/status
+      - agentservices
+      - agentservices/status
+      - evalsuites
+      - evalsuites/status
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - patch
+      - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: proompteng-proompteng-operator
+  labels:
+    app.kubernetes.io/name: proompteng-operator
+    app.kubernetes.io/instance: proompteng
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/part-of: proompteng
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: proompteng-proompteng-operator
+subjects:
+  - kind: ServiceAccount
+    name: proompteng-proompteng-operator
+    namespace: proompteng-system
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proompteng-proompteng-operator-config
+  namespace: proompteng-system
+  labels:
+    app.kubernetes.io/name: proompteng-operator
+    app.kubernetes.io/instance: proompteng
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/part-of: proompteng
+data:
+  config.yaml: |
+    logLevel: info
+    defaultNamespace: proompteng-system
+    leaderElection:
+      enabled: true
+      leaseDurationSeconds: 30
+      renewDeadlineSeconds: 20
+      retryPeriodSeconds: 5
+    featureFlags:
+      enableAgentServices: true
+      enableEvalSuites: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proompteng-proompteng-operator
+  namespace: proompteng-system
+  labels:
+    app.kubernetes.io/name: proompteng-operator
+    app.kubernetes.io/instance: proompteng
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/part-of: proompteng
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: proompteng-operator
+      app.kubernetes.io/instance: proompteng
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: proompteng-operator
+        app.kubernetes.io/instance: proompteng
+        app.kubernetes.io/version: "0.1.0"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: operator
+        app.kubernetes.io/part-of: proompteng
+    spec:
+      serviceAccountName: proompteng-proompteng-operator
+      automountServiceAccountToken: true
+      containers:
+        - name: operator
+          image: ghcr.io/proompteng/operator:0.1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: CONFIG_PATH
+              value: /config/config.yaml
+            - name: LOG_LEVEL
+              value: "info"
+          ports:
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+            - name: healthz
+              containerPort: 8081
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: healthz
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+          volumeMounts:
+            - name: config
+              mountPath: /config
+      volumes:
+        - name: config
+          configMap:
+            name: proompteng-proompteng-operator-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proompteng-proompteng-operator
+  namespace: proompteng-system
+  labels:
+    app.kubernetes.io/name: proompteng-operator
+    app.kubernetes.io/instance: proompteng
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/part-of: proompteng
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: proompteng-operator
+    app.kubernetes.io/instance: proompteng
+  ports:
+    - name: metrics
+      port: 9090
+      protocol: TCP
+      targetPort: metrics
+    - name: healthz
+      port: 8081
+      protocol: TCP
+      targetPort: healthz
