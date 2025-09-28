@@ -1,107 +1,138 @@
-# Proompteng Platform
+# proompteng
 
-Proompteng provides a foundation for deploying AI agent infrastructure on Kubernetes. This repository contains:
+> ship ai agents with full control plane automation.
 
-- Helm charts for installing the Proompteng CRDs and operator
-- A Go-based operator built with Kubebuilder
-- An example echo agent application using the Proompteng SDK
-- Example manifests, workflows, and documentation to help you get running quickly
+[![CI status](https://github.com/proompteng/proompteng/actions/workflows/ci.yaml/badge.svg)](https://github.com/proompteng/proompteng/actions/workflows/ci.yaml)
+[![Latest release](https://img.shields.io/github/v/release/proompteng/proompteng?display_name=tag&logo=github)](https://github.com/proompteng/proompteng/releases)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/proompteng/proompteng?style=social)](https://github.com/proompteng/proompteng/stargazers)
 
+## At a glance
 
-## Repository Layout
+- **Declarative agent control plane**: Define agent runtimes, memory backends, and policies with Kubernetes CustomResourceDefinitions.
+- **Batteries included**: Operator, Helm charts, and sample agents help teams bootstrap in minutes.
+- **Enterprise-ready foundations**: Pluggable observability, GitOps-friendly packaging, and reproducible releases.
 
-- `charts/proompteng-crds`: Raw CustomResourceDefinition manifests packaged as a Helm chart
-- `charts/proompteng-operator`: Helm chart for deploying the operator and related resources
-- `operator`: Go operator codebase built with Kubebuilder
-- `apps/echo-agent`: Example FastAPI agent demonstrating the runtime SDK
-- `examples`: Example Kubernetes manifests for common resources
-- `docs`: Design notes and operational guidance
-- `.github/workflows/ci.yaml`: Continuous integration pipeline
+## Why proompteng
 
-## Quickstart
+Modern teams need to launch AI agents that are observable, repeatable, and safe. proompteng layers an operator-driven control plane onto Kubernetes so you can:
 
-1. Install everything with a single manifest (ideal for quick starts or GitOps repos):
-   ```sh
-   kubectl apply -f https://raw.githubusercontent.com/proompteng/proompteng/main/manifests/proompteng/install.yaml
-   ```
-   The bundle creates the `proompteng-system` namespace, registers all CustomResourceDefinitions, and deploys the operator with default settings.
-   For GitOps/Kustomize setups you can reference the same file directly:
-   ```yaml
-   resources:
-     - https://raw.githubusercontent.com/proompteng/proompteng/<tag>/manifests/proompteng/install.yaml
-   ```
-   Replace `<tag>` with the Git tag or branch you want to track (for example, `main` or `v0.1.0`).
-   If you prefer to consume a directory instead of a single URL you can point at
-   the accompanying Kustomize base:
-   ```yaml
-   resources:
-     - github.com/proompteng/proompteng//manifests/proompteng?ref=<tag>
-   ```
-   When you want to pin to an immutable GitHub release, reference the
-   versioned manifest published under `releases/`:
-   ```yaml
-   resources:
-     - https://raw.githubusercontent.com/proompteng/proompteng/<tag>/releases/kubernetes/proompteng/install.yaml
-   ```
-   The [`examples/gitops/lab`](examples/gitops/lab) directory mirrors the
-   structure used in [`gregkonush/lab`](https://github.com/gregkonush/lab) and
-   shows how to drop the manifest URL straight into an ArgoCD application.
-2. Install the CRDs with Helm (optional when using the single manifest):
-   ```sh
-   helm upgrade --install proompteng-crds charts/proompteng-crds -n proompteng-system --create-namespace
-   ```
-3. Install the operator with Helm (optional when using the single manifest):
-   ```sh
-   helm upgrade --install proompteng charts/proompteng-operator -n proompteng-system
-   ```
-4. Apply the sample resources:
-   ```sh
-   kubectl apply -f examples/ns.yaml
-   kubectl apply -f examples/memory-mongodb.yaml
-   kubectl apply -f examples/agent-echo.yaml
-   ```
-5. Run the operator locally (optional):
-   ```sh
-   KUBECONFIG=${KUBECONFIG:-~/.kube/config} go run ./operator/main.go
-   ```
-6. Build and push the example agent image (optional):
-   ```sh
-   docker build -t ghcr.io/proompteng/echo-agent:0.1.0 apps/echo-agent
-   docker push ghcr.io/proompteng/echo-agent:0.1.0
-   ```
+- Treat agents as first-class resources with desired-state reconciliation.
+- Keep infrastructure GitOps-ready through Helm charts and apply-once manifests.
+- Standardise on a Python SDK and Go operator primitives that scale from prototypes to production clusters.
 
-### Smoke-test the manifest with Kind
+## Feature highlights
 
-Before pointing a real cluster at the bundled manifest you can validate the
-resources on a local [Kind](https://kind.sigs.k8s.io/) cluster. The repository
-includes a helper script that provisions a throwaway cluster, applies the
-release manifest, and waits for the operator to become ready:
+- **CRD suite for agents, memories, and policies** with schema validation.
+- **Kubebuilder-based operator** that reconciles workloads, secrets, and service accounts.
+- **FastAPI echo-agent reference** showcasing the runtime SDK, memory adapters, and observability hooks.
+- **Smoke-test examples** under `examples/` for GitOps and direct cluster usage.
+- **Release automation** with GitHub Actions CI, versioned manifests, and quick rollback paths.
+
+## Quickstart (5 minutes)
+
+### Prerequisites
+
+- Kubernetes cluster with `kubectl` context set (Kind, k3d, or managed).
+- Helm 3.16.2+
+- Docker Engine 28.4.0+ (optional if you build custom agents)
+- Go 1.25.1+ for local operator runs
+
+### 1. Install the control plane
+
+Apply the bundled manifest for an end-to-end installation:
 
 ```sh
-./hack/test_release_manifest.sh
+kubectl apply -f https://raw.githubusercontent.com/proompteng/proompteng/main/manifests/proompteng/install.yaml
 ```
 
-Pass a different manifest path or URL to test prospective changes:
+This provisions the `proompteng-system` namespace, registers CustomResourceDefinitions, and deploys the operator with sensible defaults.
 
-```sh
-./hack/test_release_manifest.sh manifests/proompteng/install.yaml
+Prefer GitOps? Reference the same manifest inside your Kustomize base:
+
+```yaml
+resources:
+  - https://raw.githubusercontent.com/proompteng/proompteng/<tag>/manifests/proompteng/install.yaml
 ```
 
-Set `KEEP_CLUSTER=1` if you would like to inspect the resources after the
-script completes:
+Replace `<tag>` with `main` for live development or a release tag such as `v0.1.0`.
+
+### 2. Install via Helm (optional)
+
+Split the install into chart components when you need more control:
 
 ```sh
-KEEP_CLUSTER=1 ./hack/test_release_manifest.sh
+helm upgrade --install proompteng-crds charts/proompteng-crds -n proompteng-system --create-namespace
+helm upgrade --install proompteng charts/proompteng-operator -n proompteng-system
+```
+
+### 3. Deploy the sample echo agent
+
+```sh
+kubectl apply -f examples/ns.yaml
+kubectl apply -f examples/memory-mongodb.yaml
+kubectl apply -f examples/agent-echo.yaml
+```
+
+### 4. Verify the rollout
+
+```sh
 kubectl get pods -n proompteng-system
+kubectl get agents.proompteng.ai -A
 ```
 
-The script deletes the Kind cluster by default so local testing stays fast and
-repeatable.
+You should see the operator ready and the echo agent running under your target namespace.
+
+### 5. Iterate locally (optional)
+
+Run the operator against your current `$KUBECONFIG` for live debugging:
+
+```sh
+make run-operator-local
+```
+
+## Architecture
+
+proompteng pairs CustomResourceDefinitions with a Kubebuilder operator. Developers declare agent intents via GitOps or CLI, the Kubernetes API stores desired state, and the operator reconciles workloads, secrets, and dependencies onto the cluster. Observability feedback loops flow back through CRD status and logging hooks.
+
+## Platform workflow
+
+1. Model agents, memories, or connectors as CRDs checked into Git.
+2. Ship manifests through GitOps or CI pipelines.
+3. Allow the operator to reconcile workloads, inject secrets, and emit status.
+4. Inspect health via `kubectl`, dashboards, or the SDK’s telemetry endpoints.
+
+## Roadmap signals
+
+- Graph-based plan orchestration across multiple agents.
+- Pluggable memory backends beyond MongoDB.
+- Managed control plane installation for hosted clusters.
+- Observability quickstarts for OpenTelemetry and Grafana Agent.
+
+Track detailed milestones in [Linear](https://linear.app/proompteng).
+
+## Resources
+
+- [Operator source](operator/) — Kubebuilder reconcilers and controller runtime.
+- [Helm charts](charts/) — Install CRDs and the control plane with overrides.
+- [FastAPI echo agent](apps/echo-agent/) — Example runtime with SDK usage and tests.
+- [Examples](examples/) — Apply-once manifests for common deployments.
+- [Docs](docs/) — Architecture notes, onboarding, and upgrade guides.
+
+## Community & support
+
+- Follow release notes in the GitHub Releases feed.
+- File issues with reproducible steps or enhancement ideas — templates live in `.github/`.
+- Report security concerns privately to <security@proompteng.ai>.
 
 ## Contributing
 
-Contributions are welcome. Please open an issue with proposed changes before submitting a pull request so we can align roadmap and expectations.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branching conventions, toolchain requirements, and the pull request checklist.
 
 ## License
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).
+Distributed under the [Apache License 2.0](LICENSE). Commercial support inquiries can reach <partnerships@proompteng.ai>.
+
+## Give proompteng a star
+
+If this project streamlines your agent infrastructure, please star and watch the repository to keep updates flowing.

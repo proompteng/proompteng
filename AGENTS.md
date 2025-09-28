@@ -28,4 +28,4 @@ Go code is formatted with `gofmt`/`goimports`; keep exported API types versioned
 Co-locate Go tests as `_test.go` files and favour table-driven cases. Add Python suites under `apps/echo-agent/tests/` and run `pytest` when behaviour expands. Re-run `make kubeconform` after chart or example edits to catch schema drift and keep coverage healthy before merging.
 
 ## Commit & Pull Request Guidelines
-Use Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`) with present-tense summaries. PRs document behaviour changes, manual or automated test evidence, linked Notion tasks or issues, and release impact. Announce deployment windows in `#deploy-proompteng` while updating the Notion release log.
+Use Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`) with present-tense summaries. PRs document behaviour changes, manual or automated test evidence, linked tasks or issues, and release impact. Communicate deployment windows alongside updates to the release log.
